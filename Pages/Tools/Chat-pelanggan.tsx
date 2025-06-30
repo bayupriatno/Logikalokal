@@ -1,51 +1,76 @@
-'use client';
-import { useState } from 'react';
-import BookmarkButton from '@/components/BookmarkButton';
+import React, { useState } from 'react';
 
-export default function ChatPelanggan() {
+const ChatPelangganPage: React.FC = () => {
   const [pertanyaan, setPertanyaan] = useState('');
-  const [gaya, setGaya] = useState('ramah dan sopan');
+  const [gaya, setGaya] = useState('');
   const [jawaban, setJawaban] = useState('');
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
-  async function generateReply() {
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    setJawaban('');
+
+    if (!pertanyaan.trim() || !gaya.trim()) {
+      setError('Pertanyaan dan gaya wajib diisi.');
+      return;
+    }
+
     setLoading(true);
-    const res = await fetch('/api/generate-chat-pelanggan', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ pertanyaan, gaya }),
-    });
-    const data = await res.json();
-    setJawaban(data.jawaban);
-    setLoading(false);
-  }
+    try {
+      const res = await fetch('/api/generate-chat-pelanggan', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pertanyaan, gaya }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Terjadi masalah koneksi');
+      setJawaban(data.jawaban);
+    } catch (err: any) {
+      setError(err.message || 'Terjadi kesalahan');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
-    <div className="min-h-screen p-6 max-w-xl mx-auto">
-      <h1 className="text-2xl font-bold mb-4 flex justify-between">
-        💬 Balasan Pelanggan
-        <BookmarkButton slug="chat-pelanggan" />
-      </h1>
-      <textarea
-        className="w-full p-2 border rounded mb-2"
-        placeholder="Pertanyaan pelanggan"
-        value={pertanyaan}
-        onChange={(e) => setPertanyaan(e.target.value)}
-      />
-      <input
-        className="w-full p-2 border rounded mb-4"
-        placeholder="Gaya jawaban (contoh: ramah, formal)"
-        value={gaya}
-        onChange={(e) => setGaya(e.target.value)}
-      />
-      <button
-        onClick={generateReply}
-        disabled={loading}
-        className="bg-green-600 text-white px-4 py-2 rounded"
-      >
-        {loading ? 'Menjawab...' : 'Buat Jawaban'}
-      </button>
-      {jawaban && <div className="mt-4 p-4 bg-gray-100 border rounded">{jawaban}</div>}
+    <div style={{ maxWidth: 500, margin: '0 auto', padding: 24 }}>
+      <h1>Balas Chat Pelanggan</h1>
+      <form onSubmit={handleSubmit}>
+        <div>
+          <label>Pertanyaan Pelanggan</label>
+          <textarea
+            value={pertanyaan}
+            onChange={e => setPertanyaan(e.target.value)}
+            rows={3}
+            style={{ width: '100%' }}
+            required
+          />
+        </div>
+        <div>
+          <label>Gaya Bahasa</label>
+          <input
+            value={gaya}
+            onChange={e => setGaya(e.target.value)}
+            placeholder="Contoh: ramah, profesional, lucu"
+            style={{ width: '100%' }}
+            required
+          />
+        </div>
+        <button type="submit" disabled={loading}>
+          {loading ? 'Memproses...' : 'Buat Balasan'}
+        </button>
+      </form>
+      {error && <div style={{ color: 'red', marginTop: 12 }}>{error}</div>}
+      {jawaban && (
+        <div style={{ marginTop: 16, background: '#f8f9fa', padding: 12, borderRadius: 8 }}>
+          <b>Balasan:</b>
+          <p>{jawaban}</p>
+        </div>
+      )}
     </div>
   );
-}
+};
+
+export default ChatPelangganPage;
