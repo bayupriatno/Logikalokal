@@ -1,58 +1,71 @@
-'use client';
-import { useState } from 'react';
-import BookmarkButton from '@/components/BookmarkButton';
+import React, { useState } from 'react';
 
-export default function NamaBrand() {
+const NamaBrandPage: React.FC = () => {
   const [bidang, setBidang] = useState('');
   const [nilai, setNilai] = useState('');
-  const [hasil, setHasil] = useState<string[]>([]);
+  const [namaList, setNamaList] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
-  async function buatNamaBrand() {
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    setNamaList([]);
+
+    if (!bidang.trim() || !nilai.trim()) {
+      setError('Bidang dan nilai brand wajib diisi.');
+      return;
+    }
+
     setLoading(true);
-    const res = await fetch('/api/generate-nama-brand', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ bidang, nilai }),
-    });
-    const data = await res.json();
-    setHasil(data.namaList || []);
-    setLoading(false);
-  }
+    try {
+      const res = await fetch('/api/generate-nama-brand', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ bidang, nilai }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Terjadi masalah koneksi');
+      setNamaList(data.namaList || []);
+    } catch (err: any) {
+      setError(err.message || 'Terjadi kesalahan');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
-    <div className="min-h-screen p-6 max-w-xl mx-auto">
-      <h1 className="text-2xl font-bold mb-4 flex justify-between">
-        ✨ Nama Brand
-        <BookmarkButton slug="nama-brand" />
-      </h1>
-      <input
-        type="text"
-        placeholder="Bidang usaha (contoh: minuman kekinian)"
-        value={bidang}
-        onChange={(e) => setBidang(e.target.value)}
-        className="w-full border p-2 rounded mb-2"
-      />
-      <input
-        type="text"
-        placeholder="Nilai brand (contoh: lokal, sehat, modern)"
-        value={nilai}
-        onChange={(e) => setNilai(e.target.value)}
-        className="w-full border p-2 rounded mb-4"
-      />
-      <button
-        onClick={buatNamaBrand}
-        disabled={loading}
-        className="bg-green-600 text-white px-4 py-2 rounded"
-      >
-        {loading ? 'Mencari nama...' : 'Cari Nama Brand'}
-      </button>
-
-      {hasil.length > 0 && (
-        <div className="mt-6 p-4 bg-gray-100 border rounded space-y-2">
-          <p className="font-semibold">Rekomendasi Nama:</p>
-          <ul className="list-disc ml-5">
-            {hasil.map((nama, i) => (
+    <div style={{ maxWidth: 500, margin: '0 auto', padding: 24 }}>
+      <h1>Nama Brand</h1>
+      <form onSubmit={handleSubmit}>
+        <div>
+          <label>Bidang Brand</label>
+          <input
+            value={bidang}
+            onChange={e => setBidang(e.target.value)}
+            style={{ width: '100%' }}
+            required
+          />
+        </div>
+        <div>
+          <label>Nilai Brand</label>
+          <input
+            value={nilai}
+            onChange={e => setNilai(e.target.value)}
+            style={{ width: '100%' }}
+            required
+          />
+        </div>
+        <button type="submit" disabled={loading}>
+          {loading ? 'Memproses...' : 'Buat Nama'}
+        </button>
+      </form>
+      {error && <div style={{ color: 'red', marginTop: 12 }}>{error}</div>}
+      {namaList.length > 0 && (
+        <div style={{ marginTop: 16, background: '#f8f9fa', padding: 12, borderRadius: 8 }}>
+          <b>Ide Nama:</b>
+          <ul>
+            {namaList.map((nama, i) => (
               <li key={i}>{nama}</li>
             ))}
           </ul>
@@ -60,4 +73,6 @@ export default function NamaBrand() {
       )}
     </div>
   );
-}
+};
+
+export default NamaBrandPage;
