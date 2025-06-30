@@ -1,57 +1,71 @@
-'use client';
-import { useState } from 'react';
-import BookmarkButton from '@/components/BookmarkButton';
+import React, { useState } from 'react';
 
-export default function IdeKonten() {
+const IdeKontenPage: React.FC = () => {
   const [topik, setTopik] = useState('');
   const [audiens, setAudiens] = useState('');
-  const [hasil, setHasil] = useState<string[]>([]);
+  const [ideList, setIdeList] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
-  async function generateIdeas() {
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    setIdeList([]);
+
+    if (!topik.trim() || !audiens.trim()) {
+      setError('Topik dan target audiens wajib diisi.');
+      return;
+    }
+
     setLoading(true);
-    const res = await fetch('/api/generate-ide-konten', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ topik, audiens }),
-    });
-    const data = await res.json();
-    setHasil(data.ideList || []);
-    setLoading(false);
-  }
+    try {
+      const res = await fetch('/api/generate-ide-konten', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ topik, audiens }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Terjadi masalah koneksi');
+      setIdeList(data.ideList || []);
+    } catch (err: any) {
+      setError(err.message || 'Terjadi kesalahan');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
-    <div className="min-h-screen p-6 max-w-xl mx-auto">
-      <h1 className="text-2xl font-bold mb-4 flex justify-between">
-        🧠 Ide Konten Harian
-        <BookmarkButton slug="ide-konten" />
-      </h1>
-      <input
-        type="text"
-        placeholder="Topik konten (contoh: minuman sehat)"
-        value={topik}
-        onChange={(e) => setTopik(e.target.value)}
-        className="w-full border p-2 mb-2 rounded"
-      />
-      <input
-        type="text"
-        placeholder="Target audiens (contoh: remaja, pekerja kantoran)"
-        value={audiens}
-        onChange={(e) => setAudiens(e.target.value)}
-        className="w-full border p-2 mb-4 rounded"
-      />
-      <button
-        onClick={generateIdeas}
-        disabled={loading}
-        className="bg-green-600 text-white px-4 py-2 rounded"
-      >
-        {loading ? 'Menghasilkan...' : 'Buat Ide Konten'}
-      </button>
-      {hasil.length > 0 && (
-        <div className="mt-6 space-y-2 bg-gray-100 border p-4 rounded">
-          <p className="font-semibold">Rekomendasi Ide Konten:</p>
-          <ul className="list-disc ml-5">
-            {hasil.map((ide, i) => (
+    <div style={{ maxWidth: 500, margin: '0 auto', padding: 24 }}>
+      <h1>Ide Konten Harian</h1>
+      <form onSubmit={handleSubmit}>
+        <div>
+          <label>Topik Konten</label>
+          <input
+            value={topik}
+            onChange={e => setTopik(e.target.value)}
+            style={{ width: '100%' }}
+            required
+          />
+        </div>
+        <div>
+          <label>Target Audiens</label>
+          <input
+            value={audiens}
+            onChange={e => setAudiens(e.target.value)}
+            style={{ width: '100%' }}
+            required
+          />
+        </div>
+        <button type="submit" disabled={loading}>
+          {loading ? 'Memproses...' : 'Dapatkan Ide'}
+        </button>
+      </form>
+      {error && <div style={{ color: 'red', marginTop: 12 }}>{error}</div>}
+      {ideList.length > 0 && (
+        <div style={{ marginTop: 16, background: '#f8f9fa', padding: 12, borderRadius: 8 }}>
+          <b>Ide Konten:</b>
+          <ul>
+            {ideList.map((ide, i) => (
               <li key={i}>{ide}</li>
             ))}
           </ul>
@@ -59,4 +73,6 @@ export default function IdeKonten() {
       )}
     </div>
   );
-}
+};
+
+export default IdeKontenPage;
