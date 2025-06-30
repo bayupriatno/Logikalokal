@@ -1,55 +1,70 @@
-'use client';
-import { useState } from 'react';
-import BookmarkButton from '@/components/BookmarkButton';
+import React, { useState } from 'react';
 
-export default function JudulViral() {
+const JudulViralPage: React.FC = () => {
   const [topik, setTopik] = useState('');
   const [audiens, setAudiens] = useState('');
   const [judulList, setJudulList] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
-  async function generateJudul() {
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    setJudulList([]);
+
+    if (!topik.trim() || !audiens.trim()) {
+      setError('Topik dan audiens wajib diisi.');
+      return;
+    }
+
     setLoading(true);
-    const res = await fetch('/api/generate-judul-viral', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ topik, audiens }),
-    });
-    const data = await res.json();
-    setJudulList(data.judulList || []);
-    setLoading(false);
-  }
+    try {
+      const res = await fetch('/api/generate-judul-viral', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ topik, audiens }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Terjadi masalah koneksi');
+      setJudulList(data.judulList || []);
+    } catch (err: any) {
+      setError(err.message || 'Terjadi kesalahan');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
-    <div className="min-h-screen p-6 max-w-xl mx-auto">
-      <h1 className="text-2xl font-bold mb-4 flex justify-between">
-        🔥 Judul Viral
-        <BookmarkButton slug="judul-viral" />
-      </h1>
-      <input
-        className="w-full border p-2 rounded mb-2"
-        placeholder="Topik konten"
-        value={topik}
-        onChange={(e) => setTopik(e.target.value)}
-      />
-      <input
-        className="w-full border p-2 rounded mb-4"
-        placeholder="Target audiens (misal: remaja, ibu rumah tangga)"
-        value={audiens}
-        onChange={(e) => setAudiens(e.target.value)}
-      />
-      <button
-        onClick={generateJudul}
-        className="bg-green-600 text-white px-4 py-2 rounded"
-        disabled={loading}
-      >
-        {loading ? 'Menghasilkan...' : 'Buat Judul'}
-      </button>
-
+    <div style={{ maxWidth: 500, margin: '0 auto', padding: 24 }}>
+      <h1>Judul Viral IG/TikTok</h1>
+      <form onSubmit={handleSubmit}>
+        <div>
+          <label>Topik Konten</label>
+          <input
+            value={topik}
+            onChange={e => setTopik(e.target.value)}
+            style={{ width: '100%' }}
+            required
+          />
+        </div>
+        <div>
+          <label>Audiens</label>
+          <input
+            value={audiens}
+            onChange={e => setAudiens(e.target.value)}
+            style={{ width: '100%' }}
+            required
+          />
+        </div>
+        <button type="submit" disabled={loading}>
+          {loading ? 'Memproses...' : 'Buat Judul'}
+        </button>
+      </form>
+      {error && <div style={{ color: 'red', marginTop: 12 }}>{error}</div>}
       {judulList.length > 0 && (
-        <div className="mt-6 space-y-2 bg-gray-100 border p-4 rounded">
-          <p className="font-semibold">Rekomendasi Judul:</p>
-          <ul className="list-disc ml-5">
+        <div style={{ marginTop: 16, background: '#f8f9fa', padding: 12, borderRadius: 8 }}>
+          <b>Judul Viral:</b>
+          <ul>
             {judulList.map((judul, i) => (
               <li key={i}>{judul}</li>
             ))}
@@ -58,4 +73,6 @@ export default function JudulViral() {
       )}
     </div>
   );
-}
+};
+
+export default JudulViralPage;
