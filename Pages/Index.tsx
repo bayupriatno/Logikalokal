@@ -37,7 +37,52 @@ const tools: Tool[] = [
     nama: '🧠 Ide Konten Harian',
     deskripsi: 'Dapatkan 5 ide konten segar berdasarkan topik dan target audiensmu.',
   },
-];
+import Link from 'next/link';
+
+export default function Home() {
+  return (
+    <div style={{ maxWidth: 600, margin: '0 auto', padding: 32 }}>
+      <h1>Logikalokal AI Tools</h1>
+      <p>Solusi cerdas untuk UMKM & konten kreator. Pilih fitur berikut:</p>
+      <ul style={{ lineHeight: 2 }}>
+        <li>
+          <Link href="/tools/caption-hashtag">
+            📄 Caption & Hashtag Otomatis
+          </Link>
+        </li>
+        <li>
+          <Link href="/tools/scheduler">
+            🗓️ Jadwalkan Posting (Scheduler)
+          </Link>
+        </li>
+        <li>
+          <Link href="/tools/analytics">
+            📊 Analisis Performa Konten
+          </Link>
+        </li>
+        <li>
+          <Link href="/tools/templates">
+            🗂️ Template & Ide Viral
+          </Link>
+        </li>
+        <li>
+          <Link href="/tools/video-script">
+            🎬 AI Video Script & Voice Over
+          </Link>
+        </li>
+        <li>
+          <Link href="/tools/favorit">
+            ⭐ Favorit Saya
+          </Link>
+        </li>
+        {/* Tambahkan tools lain jika ada */}
+      </ul>
+      <footer style={{ marginTop: 32, fontSize: 14, color: '#aaa' }}>
+        &copy; {new Date().getFullYear()} Logikalokal. Powered by AI & Supabase.
+      </footer>
+    </div>
+  );
+  }
 
 const IndexPage: React.FC = () => {
   return (
